@@ -757,5 +757,4 @@ def too_large(e):
     return render_template('error.html', code=413, message='Ukuran file terlalu besar (maks 4MB). / File too large (max 4MB).'), 413
 
 if __name__ == '__main__':
-    init_db()
     app.run(debug=False, port=5000)
