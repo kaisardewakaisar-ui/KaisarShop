@@ -113,60 +113,122 @@ def close_db(exception=None):
 
 def init_db():
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    db = sqlite3.connect(DB_PATH)
-    db.executescript('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT NOT NULL,
-            company TEXT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'pembeli',
-            email_verified INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL
-        );
+    
+    # Cek jika menggunakan PostgreSQL (Supabase)
+    if config.DATABASE_URL and config.DATABASE_URL.startswith('postgres'):
+        db = get_db()
+        cur = db.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                full_name TEXT NOT NULL,
+                company TEXT,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'pembeli',
+                email_verified INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS email_otp (
+                id SERIAL PRIMARY KEY,
+                email TEXT NOT NULL,
+                otp_code TEXT NOT NULL,
+                pending_user_data TEXT NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                expires_at TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                short_desc TEXT NOT NULL,
+                full_desc TEXT NOT NULL,
+                price_usd REAL NOT NULL,
+                image_filename TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL
+            );
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                product_id INTEGER NOT NULL REFERENCES products(id),
+                price_usd REAL NOT NULL,
+                status TEXT NOT NULL DEFAULT 'menunggu_pembayaran',
+                paid_marked_at TEXT,
+                review_deadline TEXT,
+                decided_at TEXT,
+                admin_note TEXT,
+                created_at TEXT NOT NULL
+            );
+        """)
+        db.commit()
+    else:
+        # Jika menggunakan SQLite lokal
+        db = sqlite3.connect(DB_PATH)
+        db.executescript('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                company TEXT,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'pembeli',
+                email_verified INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
 
-        CREATE TABLE IF NOT EXISTS email_otp (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL,
-            otp_code TEXT NOT NULL,
-            pending_user_data TEXT NOT NULL,
-            attempts INTEGER NOT NULL DEFAULT 0,
-            expires_at TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        );
+            CREATE TABLE IF NOT EXISTS email_otp (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT NOT NULL,
+                otp_code TEXT NOT NULL,
+                pending_user_data TEXT NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                expires_at TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
 
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            category TEXT NOT NULL,
-            short_desc TEXT NOT NULL,
-            full_desc TEXT NOT NULL,
-            price_usd REAL NOT NULL,
-            image_filename TEXT,
-            is_active INTEGER NOT NULL DEFAULT 1,
-            created_at TEXT NOT NULL
-        );
+            CREATE TABLE IF NOT EXISTS products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                short_desc TEXT NOT NULL,
+                full_desc TEXT NOT NULL,
+                price_usd REAL NOT NULL,
+                image_filename TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL
+            );
 
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            product_id INTEGER NOT NULL,
-            price_usd REAL NOT NULL,
-            status TEXT NOT NULL DEFAULT 'menunggu_pembayaran',
-            paid_marked_at TEXT,
-            review_deadline TEXT,
-            decided_at TEXT,
-            admin_note TEXT,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (product_id) REFERENCES products (id)
-        );
-    ''')
-    db.commit()
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                price_usd REAL NOT NULL,
+                status TEXT NOT NULL DEFAULT 'menunggu_pembayaran',
+                paid_marked_at TEXT,
+                review_deadline TEXT,
+                decided_at TEXT,
+                admin_note TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users (id),
+                FOREIGN KEY (product_id) REFERENCES products (id)
+            );
+        ''')
+        db.commit()
+        db.close()
 
+    # Buat akun admin jika belum ada
     if config.ADMIN_USERNAME and config.ADMIN_PASSWORD:
+        db = get_db()
         existing_admin = db.execute('SELECT id FROM users WHERE role = "admin"').fetchone()
         if existing_admin is None:
             db.execute(
@@ -176,6 +238,8 @@ def init_db():
             )
             db.commit()
 
+    # Seed produk awal (jika kosong)
+    db = get_db()
     cur = db.execute('SELECT COUNT(*) FROM products')
     if cur.fetchone()[0] == 0:
         now = datetime.now().isoformat()
@@ -183,10 +247,9 @@ def init_db():
             ('Venom Crypter FUD', 'crypter', 'Fully Undetectable crypter with advanced obfuscation and persistence.', 'A premium crypter designed to bypass all major antivirus detection including Windows Defender, Kaspersky, and Bitdefender. Features polymorphic code engine, process injection, startup persistence, and encrypted payload delivery. Supports .exe, .dll, .bat output formats. Silent execution with anti-sandbox and anti-VM detection built-in.', 499.0, None, 1, now),
             ('DarkStealer RAT v3', 'malware', 'Remote Access Trojan with keylogger, screen capture, and reverse proxy.', 'Advanced RAT with full remote control capabilities. Features include live keylogging, screen monitoring, webcam access, file browser, password harvesting from browsers and crypto wallets, reverse SOCKS5 proxy, and encrypted C2 communication. Lightweight client with only 50KB payload size.', 299.0, None, 1, now)
         ]
-        db.executemany('INSERT INTO products (name, category, short_desc, full_desc, price_usd, image_filename, is_active, created_at) VALUES (?,?,?,?,?,?,?,?)', products)
+        for p in products:
+            db.execute('INSERT INTO products (name, category, short_desc, full_desc, price_usd, image_filename, is_active, created_at) VALUES (?,?,?,?,?,?,?,?)', p)
         db.commit()
-
-    db.close()
 
 def get_lang():
     lang = session.get('lang', 'id')
