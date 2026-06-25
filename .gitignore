@@ -1,0 +1,10 @@
+.env
+*.db
+__pycache__/
+*.pyc
+static/uploads/*
+!static/uploads/.gitkeep
+.vercel
+*.log
+venv/
+.venv/
