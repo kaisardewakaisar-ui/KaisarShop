@@ -1,0 +1,49 @@
+{% extends "admin_base.html" %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<div class="page-head">
+    <p class="eyebrow">Transactions</p>
+    <h1>Incoming Orders</h1>
+    <p>Review buyer payment confirmations. Approving redirects the buyer to Telegram for final proof submission.</p>
+</div>
+
+<div class="tab-row">
+    <a href="{{ url_for('admin_orders') }}" class="{{ 'active' if not status_filter else '' }}">All</a>
+    <a href="{{ url_for('admin_orders', status='menunggu_konfirmasi') }}" class="{{ 'active' if status_filter == 'menunggu_konfirmasi' else '' }}">Pending Review</a>
+    <a href="{{ url_for('admin_orders', status='disetujui') }}" class="{{ 'active' if status_filter == 'disetujui' else '' }}">Approved</a>
+    <a href="{{ url_for('admin_orders', status='ditolak') }}" class="{{ 'active' if status_filter == 'ditolak' else '' }}">Rejected</a>
+</div>
+
+{% if orders|length == 0 %}
+    <div class="empty-state">No orders in this category.</div>
+{% else %}
+    <div class="table-wrap">
+        <table class="data">
+            <thead><tr><th>Buyer</th><th>Product</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order['full_name'] }}<br><span class="help-text">{{ order['company'] or '-' }} &middot; {{ order['email'] }}</span></td>
+                    <td>{{ order['product_name'] }}</td>
+                    <td>${{ '%.2f'|format(order['price_usd']) }}</td>
+                    <td><span class="tag tag-{{ order['status'] }}">{{ order['status'] }}</span></td>
+                    <td>
+                        {% if order['status'] == 'menunggu_konfirmasi' %}
+                        <form method="post" action="{{ url_for('admin_decide_order', order_id=order['id']) }}" style="display:flex; flex-direction:column; gap:8px; min-width:200px;">
+                            <input type="text" name="admin_note" placeholder="Note (optional)" style="background:var(--surface-2); border:1px solid var(--line); color:var(--white); border-radius:7px; padding:8px 10px; font-size:0.78rem;">
+                            <div style="display:flex; gap:8px;">
+                                <button type="submit" name="decision" value="disetujui" class="btn btn-sm btn-primary" style="flex:1;">Approve</button>
+                                <button type="submit" name="decision" value="ditolak" class="btn btn-sm btn-danger" style="flex:1;">Reject</button>
+                            </div>
+                        </form>
+                        {% else %}
+                            <span class="help-text">{{ order['admin_note'] or '-' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "admin_base.html" %}
+{% block title %}Manage Products{% endblock %}
+{% block content %}
+<div class="page-head">
+    <p class="eyebrow">Catalog Management</p>
+    <h1>Manage Products</h1>
+    <p>Add, edit, or deactivate products in the catalog.</p>
+</div>
+
+<div style="margin-bottom:20px;">
+    <a href="{{ url_for('admin_product_add') }}" class="btn btn-primary">+ Add New Product</a>
+</div>
+
+<div class="table-wrap">
+    <table class="data">
+        <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product['name'] }}</td>
+                <td>{{ product['category'] }}</td>
+                <td>${{ '%.2f'|format(product['price_usd']) }}</td>
+                <td>
+                    {% if product['is_active'] %}<span class="tag tag-disetujui">active</span>
+                    {% else %}<span class="tag tag-ditolak">inactive</span>{% endif %}
+                </td>
+                <td style="display:flex; gap:8px;">
+                    <a href="{{ url_for('admin_product_edit', product_id=product['id']) }}" class="btn btn-sm">Edit</a>
+                    {% if product['is_active'] %}
+                    <form class="inline" method="post" action="{{ url_for('admin_product_delete', product_id=product['id']) }}" onsubmit="return confirm('Deactivate this product?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Deactivate</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

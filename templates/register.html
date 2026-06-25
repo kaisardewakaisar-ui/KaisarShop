@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav_register') }} &mdash; KaisarShop{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <p class="eyebrow">{{ t('nav_register') }}</p>
+    <h1>{{ 'Buat Akun' if lang == 'id' else 'Create Account' }}</h1>
+    <p class="help-text" style="margin-bottom:18px;">
+        {{ 'Email Anda akan diverifikasi dengan kode OTP sebelum akun aktif.' if lang == 'id' else 'Your email will be verified with an OTP code before the account is activated.' }}
+    </p>
+
+    <form method="post">
+        <div class="field">
+            <label for="full_name">{{ 'Nama Lengkap' if lang == 'id' else 'Full Name' }}</label>
+            <input type="text" id="full_name" name="full_name" required autofocus>
+        </div>
+        <div class="field">
+            <label for="company">{{ 'Perusahaan' if lang == 'id' else 'Company' }}</label>
+            <input type="text" id="company" name="company" placeholder="{{ 'Opsional' if lang == 'id' else 'Optional' }}">
+        </div>
+        <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required pattern="[a-zA-Z0-9_]{3,32}" title="3-32 karakter, huruf/angka/underscore">
+        </div>
+        <div class="field">
+            <label for="password">{{ 'Kata Sandi' if lang == 'id' else 'Password' }}</label>
+            <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="field">
+            <label for="confirm">{{ 'Konfirmasi Kata Sandi' if lang == 'id' else 'Confirm Password' }}</label>
+            <input type="password" id="confirm" name="confirm" required minlength="8" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">{{ t('nav_register') }}</button>
+    </form>
+
+    <p class="auth-footer">
+        {{ 'Sudah punya akun?' if lang == 'id' else 'Already have an account?' }}
+        <a href="{{ url_for('login') }}">{{ t('login_link') }}</a>
+    </p>
+</div>
+{% endblock %}

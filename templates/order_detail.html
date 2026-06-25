@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Pesanan' if lang == 'id' else 'Order' }} #{{ order['id'] }} &mdash; KaisarShop{% endblock %}
+{% block content %}
+
+{% if order['status'] == 'disetujui' %}
+    <div class="redirect-screen">
+        <div class="icon">✅</div>
+        <h1>{{ 'Pembayaran Disetujui!' if lang == 'id' else 'Payment Approved!' }}</h1>
+        <p>
+            {% if lang == 'id' %}
+                Admin telah memverifikasi pembayaran Anda untuk <strong>{{ order['product_name'] }}</strong>.
+                Anda akan diarahkan ke Telegram untuk verifikasi akhir dan pengiriman bukti transaksi kepada admin.
+            {% else %}
+                The admin has verified your payment for <strong>{{ order['product_name'] }}</strong>.
+                You will be redirected to Telegram for final verification and to send your transaction proof to the admin.
+            {% endif %}
+        </p>
+        <a href="{{ telegram_url }}" target="_blank" rel="noopener" class="btn btn-telegram" id="telegram-btn" style="width:100%;">
+            {{ 'Buka Telegram Sekarang' if lang == 'id' else 'Open Telegram Now' }}
+        </a>
+        <p class="help-text" style="margin-top:16px;">
+            <span class="spinner"></span>
+            {{ 'Mengalihkan otomatis dalam beberapa detik...' if lang == 'id' else 'Redirecting automatically in a few seconds...' }}
+        </p>
+    </div>
+    <div id="js-data" data-telegram-url="{{ telegram_url }}" data-mode="auto-redirect" hidden></div>
+    <script src="{{ url_for('static', filename='js/order.js') }}"></script>
+
+{% else %}
+<div class="page-head">
+    <p class="eyebrow">{{ 'Detail Pesanan' if lang == 'id' else 'Order Details' }}</p>
+    <h1>{{ order['product_name'] }}</h1>
+    <p>{{ 'Nomor Pesanan' if lang == 'id' else 'Order Number' }}: #{{ order['id'] }}</p>
+</div>
+
+<div class="detail-layout">
+    <div class="detail-main">
+        <div class="status-banner status-{{ order['status'] }}">{{ status_label(order['status']) }}</div>
+
+        {% if order['status'] == 'menunggu_konfirmasi' and sisa_jam is not none %}
+            <div class="countdown-box" style="margin-top:16px;">
+                <div class="num">{{ '%.1f'|format(sisa_jam) }} {{ 'jam' if lang == 'id' else 'hours' }}</div>
+                <div class="label">{{ 'Sisa waktu tinjauan admin' if lang == 'id' else 'Remaining admin review time' }}</div>
+            </div>
+        {% endif %}
+
+        {% if order['status'] == 'ditolak' %}
+            <p style="margin-top:16px; color:var(--muted);">
+                {{ order['admin_note'] or ('Pembayaran tidak dapat diverifikasi. Hubungi admin untuk info lebih lanjut.' if lang == 'id' else 'Payment could not be verified. Contact admin for more information.') }}
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="detail-side">
+        <div>
+            <div class="price-tag">${{ '%.2f'|format(order['price_usd']) }}</div>
+            <div class="price-label">{{ t('price_label') }}</div>
+        </div>
+
+        {% if order['status'] == 'menunggu_pembayaran' %}
+            <div class="wallet-box">
+                <span class="wallet-label">Solana (SOL)</span>{{ wallet_sol }}
+            </div>
+            <div class="wallet-box">
+                <span class="wallet-label">Ethereum (ETH)</span>{{ wallet_eth }}
+            </div>
+            <p class="help-text">
+                {{ 'Kirim pembayaran sesuai harga ke salah satu dompet di atas. Setelah transfer, klik tombol di bawah.' if lang == 'id' else 'Send payment matching the price to one of the wallets above. After transferring, click the button below.' }}
+            </p>
+            <form method="post" action="{{ url_for('mark_paid', order_id=order['id']) }}">
+                <button type="submit" class="btn btn-primary" style="width:100%;">
+                    {{ 'Saya Sudah Bayar' if lang == 'id' else 'I Have Paid' }}
+                </button>
+            </form>
+        {% elif order['status'] == 'menunggu_konfirmasi' %}
+            <p class="help-text">
+                {{ 'Admin akan memverifikasi pembayaran Anda dalam waktu maksimal 24 jam. Halaman ini akan otomatis menampilkan langkah berikutnya begitu disetujui.' if lang == 'id' else 'Admin will verify your payment within 24 hours. This page will automatically show the next step once approved.' }}
+            </p>
+            <button class="btn" disabled style="width:100%;">{{ 'Menunggu Persetujuan' if lang == 'id' else 'Awaiting Approval' }}</button>
+        {% endif %}
+    </div>
+</div>
+
+{% if order['status'] == 'menunggu_konfirmasi' %}
+<div id="js-data" data-mode="poll-status" hidden></div>
+<script src="{{ url_for('static', filename='js/order.js') }}"></script>
+{% endif %}
+{% endif %}
+{% endblock %}

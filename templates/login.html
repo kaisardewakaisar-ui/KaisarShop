@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav_login') }} &mdash; KaisarShop{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <p class="eyebrow">{{ t('nav_login') }}</p>
+    <h1>{{ 'Masuk ke Akun Anda' if lang == 'id' else 'Sign In to Your Account' }}</h1>
+
+    <form method="post">
+        <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required autofocus autocomplete="username">
+        </div>
+        <div class="field">
+            <label for="password">{{ 'Kata Sandi' if lang == 'id' else 'Password' }}</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">{{ t('nav_login') }}</button>
+    </form>
+
+    <p class="auth-footer">
+        {{ 'Belum punya akun?' if lang == 'id' else "Don't have an account?" }}
+        <a href="{{ url_for('register') }}">{{ t('nav_register') }}</a>
+    </p>
+</div>
+{% endblock %}

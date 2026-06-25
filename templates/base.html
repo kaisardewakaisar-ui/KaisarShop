@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KaisarShop{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="{{ url_for('index') }}" class="brand">
+                <img src="https://raw.githubusercontent.com/kaisardewakaisar-ui/Image/refs/heads/main/Kaisar-Photoroom.png" alt="KaisarShop" class="brand-logo" onerror="this.style.display='none';document.getElementById('brand-text').style.display='inline';">
+                <span id="brand-text" style="display:none;">KaisarShop</span>
+            </a>
+            <nav class="nav">
+                <a href="{{ url_for('index') }}">{{ t('nav_catalog') }}</a>
+                {% if current_user.role == 'pembeli' %}
+                    <a href="{{ url_for('my_orders') }}">{{ t('nav_my_orders') }}</a>
+                {% endif %}
+
+                {% if current_user.id %}
+                    <span class="user-chip">{{ current_user.full_name }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-sm">{{ t('nav_logout') }}</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-sm">{{ t('nav_login') }}</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">{{ t('nav_register') }}</a>
+                {% endif %}
+
+                <div class="lang-switch">
+                    <a href="{{ url_for('set_lang', lang_code='id') }}" class="{{ 'active' if lang == 'id' else '' }}">ID</a>
+                    <a href="{{ url_for('set_lang', lang_code='en') }}" class="{{ 'active' if lang == 'en' else '' }}">EN</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-wrap">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">{{ t('footer_text') }}</footer>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "admin_base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+    <p class="eyebrow">Overview</p>
+    <h1>Admin Dashboard</h1>
+    <p>Summary of catalog and order activity.</p>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card"><div class="num">{{ total_produk }}</div><div class="label">Active Products</div></div>
+    <div class="stat-card"><div class="num">{{ total_pesanan }}</div><div class="label">Total Orders</div></div>
+    <div class="stat-card"><div class="num">{{ menunggu }}</div><div class="label">Awaiting Review</div></div>
+    <div class="stat-card"><div class="num">{{ disetujui }}</div><div class="label">Approved</div></div>
+    <div class="stat-card"><div class="num">{{ total_pembeli }}</div><div class="label">Registered Buyers</div></div>
+</div>
+
+<h2 class="section-title">Recent Orders</h2>
+{% if pesanan_terbaru|length == 0 %}
+    <div class="empty-state">No orders yet.</div>
+{% else %}
+    <div class="table-wrap">
+        <table class="data">
+            <thead><tr><th>Buyer</th><th>Product</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for order in pesanan_terbaru %}
+                <tr>
+                    <td>{{ order['full_name'] }}<br><span class="help-text">{{ order['email'] }}</span></td>
+                    <td>{{ order['product_name'] }}</td>
+                    <td>{{ order['created_at'][:10] }}</td>
+                    <td><span class="tag tag-{{ order['status'] }}">{{ order['status'] }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{% endblock %}

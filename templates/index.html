@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ t('home_title') }} &mdash; KaisarShop{% endblock %}
+{% block content %}
+<div class="page-head">
+    <p class="eyebrow">{{ t('home_eyebrow') }}</p>
+    <h1>{{ t('home_title') }}</h1>
+    <p>{{ t('home_desc') }}</p>
+</div>
+
+<form class="filter-bar" method="get" action="{{ url_for('index') }}">
+    <input type="text" name="q" placeholder="{{ t('search_placeholder') }}" value="{{ q }}">
+    <select name="category">
+        <option value="">{{ t('all_categories') }}</option>
+        {% for cat in categories %}
+            <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ category_label(cat) }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">{{ t('btn_search') }}</button>
+</form>
+
+{% if products|length == 0 %}
+    <div class="empty-state">{{ t('no_products') }}</div>
+{% else %}
+    <div class="product-grid">
+        {% for product in products %}
+            <a class="product-card" href="{{ url_for('product_detail', product_id=product['id']) }}">
+                <div class="product-thumb">
+                    {% if product['image_filename'] %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ product['image_filename']) }}" alt="{{ product['name'] }}">
+                    {% else %}
+                        {{ t('no_image') }}
+                    {% endif %}
+                </div>
+                <div class="product-body">
+                    <span class="product-cat">{{ category_label(product['category']) }}</span>
+                    <h3>{{ product['name'] }}</h3>
+                    <p class="product-desc">{{ product['short_desc'] }}</p>
+                    <span class="product-price">${{ '%.2f'|format(product['price_usd']) }}</span>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

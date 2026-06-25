@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Verifikasi Email' if lang == 'id' else 'Verify Email' }} &mdash; KaisarShop{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <p class="eyebrow">{{ 'Verifikasi' if lang == 'id' else 'Verification' }}</p>
+    <h1>{{ 'Masukkan Kode OTP' if lang == 'id' else 'Enter OTP Code' }}</h1>
+    <p class="help-text" style="margin-bottom:18px;">
+        {% if lang == 'id' %}
+            Kode 6 digit telah dikirim ke <strong>{{ email }}</strong>. Berlaku selama 10 menit.
+        {% else %}
+            A 6-digit code has been sent to <strong>{{ email }}</strong>. Valid for 10 minutes.
+        {% endif %}
+    </p>
+
+    <form method="post">
+        <div class="field">
+            <input type="text" name="otp_code" class="otp-input" maxlength="6" pattern="[0-9]{6}"
+                   placeholder="000000" required autofocus autocomplete="one-time-code">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+            {{ 'Verifikasi' if lang == 'id' else 'Verify' }}
+        </button>
+    </form>
+
+    <p class="auth-footer">
+        {{ 'Tidak menerima kode?' if lang == 'id' else "Didn't receive the code?" }}
+        <a href="{{ url_for('resend_otp') }}">{{ 'Kirim ulang' if lang == 'id' else 'Resend' }}</a>
+    </p>
+</div>
+{% endblock %}

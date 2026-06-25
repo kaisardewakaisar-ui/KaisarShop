@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav_my_orders') }} &mdash; KaisarShop{% endblock %}
+{% block content %}
+<div class="page-head">
+    <p class="eyebrow">{{ t('nav_my_orders') }}</p>
+    <h1>{{ t('nav_my_orders') }}</h1>
+    <p>{{ 'Pantau status pembayaran dan persetujuan setiap pesanan Anda di sini.' if lang == 'id' else 'Track the payment and approval status of every order here.' }}</p>
+</div>
+
+{% if orders|length == 0 %}
+    <div class="empty-state">
+        {{ 'Anda belum memiliki pesanan apa pun.' if lang == 'id' else 'You have no orders yet.' }}
+        <a href="{{ url_for('index') }}">{{ t('nav_catalog') }}</a>
+    </div>
+{% else %}
+    <div class="table-wrap">
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>{{ 'Produk' if lang == 'id' else 'Product' }}</th>
+                    <th>{{ 'Harga' if lang == 'id' else 'Price' }}</th>
+                    <th>{{ 'Tanggal' if lang == 'id' else 'Date' }}</th>
+                    <th>{{ 'Status' if lang == 'id' else 'Status' }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order['product_name'] }}</td>
+                    <td>${{ '%.2f'|format(order['price_usd']) }}</td>
+                    <td>{{ order['created_at'][:10] }}</td>
+                    <td><span class="tag tag-{{ order['status'] }}">{{ status_label(order['status']) }}</span></td>
+                    <td><a href="{{ url_for('order_detail', order_id=order['id']) }}" class="btn btn-sm">{{ 'Lihat' if lang == 'id' else 'View' }}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{% endblock %}
