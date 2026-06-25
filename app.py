@@ -88,7 +88,7 @@ ORDER_STATUS_LABELS = {
 
 def get_db():
     if 'db' not in g:
-        # BACA LANGSUNG DARI OS.ENVIRON UNTUK MENGHINDARI ERROR VARIABEL DI CONFIG
+        # BACA LANGSUNG DARI OS.ENVIRON (TIDAK LEWAT CONFIG)
         database_url = os.environ.get('DATABASE_URL', '')
         
         if database_url and database_url.startswith('postgres'):
